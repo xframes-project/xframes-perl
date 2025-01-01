@@ -13,4 +13,5 @@ I recommend you use a package manager such as [scoop](https://scoop.sh/) and the
 Install Platypus
 
 `cpan FFI::Platypus`
-`cpan JSON`
+`cpan JSON` (may require root privileges on Ubuntu if using system Perl package)
+`cpan AnyEvent`

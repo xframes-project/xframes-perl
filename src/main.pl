@@ -74,7 +74,6 @@ my %theme2Colors = (
     white            => "#fff",
 );
 
-# Define the ImGui colors mapping based on enum values and color definitions
 my %theme2 = (
     colors => {
         $ImGuiCol{Text}              => [$theme2Colors{white}, 1],
@@ -133,28 +132,28 @@ my %theme2 = (
     },
 );
 
-# Define the input data
-my $font_defs = {
+my $base_font_defs = {
     defs => [
         { name => "roboto-regular", sizes => [16, 18, 20, 24, 28, 32, 36, 48] },
     ]
 };
 
-# Transform the data using map
 my @font_size_pairs = map {
     my $name = $_->{name};
     map { { name => $name, size => $_ } } @{ $_->{sizes} };
-} @{ $font_defs->{defs} };
+} @{ $base_font_defs->{defs} };
 
+my $font_defs = {
+    defs => \@font_size_pairs
+};
 
-my $font_defs_json = encode_json(\@font_size_pairs);
+my $font_defs_json = encode_json($font_defs);
+# my $theme_json = encode_json($theme2{colors});
 my $theme_json = encode_json(\%theme2);
 
-# Create a new instance
-my $ffi = FFI::Platypus->new( api => 1 );
+my $ffi = FFI::Platypus->new( api => 2 );
 $ffi->lib('./libxframesshared.so');
 
-# Define types
 $ffi->type('(void)->void' => 'OnInitCb');
 $ffi->type('(int, string)->void' => 'OnTextChangedCb');
 $ffi->type('(int, int)->void' => 'OnComboChangedCb');
@@ -166,44 +165,51 @@ $ffi->type('(int)->void' => 'OnClickCb');
 
 my $on_init = $ffi->closure(sub {
 });
+$on_init->sticky;
 
 my $on_text_changed = $ffi->closure(sub {
     my ($id, $text) = @_;
     print "Text changed: ID=$id, Text=$text\n";
 });
+$on_text_changed->sticky;
 
 my $on_combo_changed = $ffi->closure(sub {
     my ($id, $selected_index) = @_;
     print "Combo changed: ID=$id, Selected=$selected_index\n";
 });
+$on_combo_changed->sticky;
 
 my $on_numeric_value_changed = $ffi->closure(sub {
     my ($id, $value) = @_;
     print "Numeric value changed: ID=$id, Value=$value\n";
 });
+$on_numeric_value_changed->sticky;
 
 my $on_boolean_value_changed = $ffi->closure(sub {
     my ($id, $state) = @_;
     print "Boolean value changed: ID=$id, State=$state\n";
 });
+$on_boolean_value_changed->sticky;
 
 my $on_multiple_numeric_values_changed = $ffi->closure(sub {
     my ($id, $values_ptr, $num_values) = @_;
     # Dereference the float array (you may need XS helper code for this)
     print "Multiple numeric values changed: ID=$id, NumValues=$num_values\n";
 });
+$on_multiple_numeric_values_changed->sticky;
 
 my $on_click = $ffi->closure(sub {
     my ($id) = @_;
     print "Button clicked: ID=$id\n";
 });
+$on_click->sticky;
 
 # Attach the `init` function
 $ffi->attach(
     init => [
-        'opaque',  # assetsBasePath
-        'opaque',  # rawFontDefinitions
-        'opaque',  # rawStyleOverrideDefinitions
+        'string',  # assetsBasePath
+        'string',  # rawFontDefinitions
+        'string',  # rawStyleOverrideDefinitions
         'OnInitCb',
         'OnTextChangedCb',
         'OnComboChangedCb',
@@ -214,22 +220,25 @@ $ffi->attach(
     ] => 'void'
 );
 
-my $base_assets_path = './assets';
+my $base_assets_path = '../assets';
 
 # my($base_assets_path_ptr, $base_assets_path_size) = scalar_to_buffer $base_assets_path;
 # my($font_defs_json_ptr, $font_defs_json_size) = scalar_to_buffer $font_defs_json;
 # my($theme_json_ptr, $theme_json_size) = scalar_to_buffer $theme_json;
 
-my $base_assets_path_ptr = strdup $base_assets_path;
-my $font_defs_json_ptr = strdup $font_defs_json;
-my $theme_json_ptr = strdup $theme_json;
+# my $base_assets_path_ptr = strdup $base_assets_path;
+# my $font_defs_json_ptr = strdup $font_defs_json;
+# my $theme_json_ptr = strdup $theme_json;
 
+
+print $base_assets_path . "\n";
+print $theme_json . "\n";
 
 # Call the `init` function
 init(
-    $base_assets_path_ptr,
-    $font_defs_json_ptr,
-    $theme_json_ptr,
+    $base_assets_path,
+    $font_defs_json,
+    $theme_json,
     $on_init,
     $on_text_changed,
     $on_combo_changed,
@@ -239,13 +248,9 @@ init(
     $on_click
 );
 
-# print "Press enter to quit";
-# my $user_input = <STDIN>;
-
-# Set a timer that fires every 1 second
 my $timer = AnyEvent->timer(
-    after    => 1,        # First execution after 1 second
-    interval => 1,        # Repeat every 1 second
+    after    => 1,        
+    interval => 1,       
     cb       => sub {
         print "Timer triggered!\n";
     },
