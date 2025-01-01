@@ -2,7 +2,7 @@
 
 ## Status
 
-This is not working as XFrames runs in a separate thread, which currently causes
+This is currently **not working** as XFrames runs in a separate thread, which currently causes
 
 `Segmentation fault (core dumped)`
 
