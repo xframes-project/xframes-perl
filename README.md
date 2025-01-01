@@ -8,6 +8,7 @@ This is currently **not working** as XFrames spawns a separate thread (within th
 
 I would need to find a way to 're-attach' the Perl engine to the current thread, but I also came across [this](https://github.com/PerlFFI/FFI-Platypus?tab=readme-ov-file#i-get-seg-faults-on-some-platforms-but-not-others-with-a-library-using-pthreads):
 
+![image](https://github.com/user-attachments/assets/f1ec0bfd-eebb-48e3-ba78-bc8b0e7392d4)
 
 
 ## Instructions
